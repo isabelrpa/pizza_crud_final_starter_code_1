@@ -16,9 +16,5 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Databases & data artifacts
-data/*.db
-*.sqlite3
-
 # Flask instance folder
 instance/
