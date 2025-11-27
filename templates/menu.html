@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pizza Menu</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="header">
@@ -34,6 +34,11 @@
         <div class="field">
           <label for="customer_name">Your Name</label>
           <input type="text" id="customer_name" name="customer_name" value="{{ form.customer_name if form and form.customer_name else '' }}" required>
+        </div>
+
+        <div class="field">
+          <label for="promo_code">Promo Code (optional)</label>
+          <input type="text" id="promo_code" name="promo_code" value="{{ form.promo_code if form and form.promo_code else '' }}">
         </div>
 
         <button type="submit">Place Order</button>

@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.jpg') }}" alt="CRUD Pizza Logo" class="logo">
+    <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.png') }}" alt="CRUD Pizza Logo" class="logo">
   </div>
   <div class="container">
     <h1>Thank you!</h1>
@@ -17,7 +17,8 @@
     <div class="order-details">
       <h2>Order Summary</h2>
       <p><strong>Order #:</strong> {{ order.order_id }}</p>
-      <p><strong>Date:</strong> {{ order.order_date }}</p>
+      <p><strong>Date:</strong> {{ display_date }}</p>
+      <p><strong>Promo Code:</strong> {{ order.promo_code }}</p>
 
       <table class="order-summary">
         <thead>
@@ -42,8 +43,8 @@
         <p><strong>Total:</strong> ${{ '%.2f' % order.total }}</p>
       </div>
     </div>
-
-    <a href="#" class="back-link">Back to Menu</a>
+    
+    <a href="{{ url_for('menu') }}" class=".back-link">Back to Menu</a>
   </div>
 </body>
 </html>
