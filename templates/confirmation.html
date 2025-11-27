@@ -18,7 +18,7 @@
       <h2>Order Summary</h2>
       <p><strong>Order #:</strong> {{ order.order_id }}</p>
       <p><strong>Date:</strong> {{ display_date }}</p>
-      <p><strong>Promo Code:</strong> {{ order.promo_code }}</p>
+      <p><strong>Promo Code:</strong> {{ order.promo_code }}{% if order.discount_percent %} ({{ order.discount_percent|int }}% off){% endif %}</p>
 
       <table class="order-summary">
         <thead>
@@ -44,7 +44,7 @@
       </div>
     </div>
     
-    <a href="{{ url_for('menu') }}" class=".back-link">Back to Menu</a>
+    <a href="{{ url_for('menu') }}" class="back-link">Back to Menu</a>
   </div>
 </body>
 </html>

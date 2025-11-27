@@ -79,15 +79,15 @@ def get_all_pizzas():
     finally:
         conn.close()
 
-def save_order(pizza_id, quantity):
+def save_order(pizza_id, quantity, customer_name, promo_code_id=None):
     """Save order to database and return order ID"""
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute(
-            'INSERT INTO "Order" (pizza_id, quantity, order_date) VALUES (?, ?, ?)',
-            (pizza_id, quantity, current_time)
+            'INSERT INTO "Order" (pizza_id, quantity, customer_name, order_date, promo_code_id) VALUES (?, ?, ?, ?, ?)',
+            (pizza_id, quantity, customer_name, current_time, promo_code_id)
         )
         order_id = cursor.lastrowid
         conn.commit()
@@ -101,9 +101,10 @@ def get_order_details(order_id):
     try:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT o.id, p.name, p.price, o.quantity
+            SELECT o.id, p.name, p.price, o.quantity, pc.code, pc.discount_percent
             FROM "Order" o
             JOIN Pizza p ON o.pizza_id = p.id
+            LEFT JOIN PromoCode pc ON o.promo_code_id = pc.id
             WHERE o.id = ?
         ''', (order_id,))
         return cursor.fetchone()
@@ -122,11 +123,26 @@ def create_order():
     """Process the pizza order"""
     pizza_id = request.form.get('pizza_id')
     quantity = request.form.get('quantity')
+    customer_name = request.form.get('customer_name')
+    promo_code = request.form.get('promo_code')  # Get promo code from form
     
-    if not pizza_id or not quantity:
+    if not pizza_id or not quantity or not customer_name:
         return redirect(url_for('menu'))
-        
-    order_id = save_order(pizza_id, quantity)
+    
+    # Look up promo code ID if provided
+    promo_code_id = None
+    if promo_code:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id FROM PromoCode WHERE code = ?', (promo_code.upper(),))
+            result = cursor.fetchone()
+            if result:
+                promo_code_id = result[0]
+        finally:
+            conn.close()
+    
+    order_id = save_order(pizza_id, quantity, customer_name, promo_code_id)
     return redirect(url_for('confirmation', order_id=order_id))
 
 @app.route('/confirmation')
@@ -145,13 +161,63 @@ def confirmation():
         'pizza_name': order[1],
         'price': order[2],
         'quantity': order[3],
-        'total': order[2] * order[3]
+        'promo_code': order[4] if order[4] else 'None',
     }
     
     return render_template('confirmation.html', 
                          order=order_data, 
                          display_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
+def migrate_order_table():
+    """Migrate Order table to add customer_name and promo_code_id"""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if migration is needed
+        cursor.execute("PRAGMA table_info(\"Order\")")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        if 'customer_name' not in columns:
+            print("Migrating Order table...")
+            
+            # Create new table with updated schema
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS "Order_new" (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pizza_id INTEGER,
+                    quantity INTEGER NOT NULL,
+                    customer_name TEXT NOT NULL,
+                    order_date TEXT NOT NULL,
+                    promo_code_id INTEGER,
+                    FOREIGN KEY (pizza_id) REFERENCES Pizza(id),
+                    FOREIGN KEY (promo_code_id) REFERENCES PromoCode(id)
+                )
+            ''')
+            
+            # Copy existing data (if any)
+            cursor.execute('''
+                INSERT INTO "Order_new" (id, pizza_id, quantity, customer_name, order_date, promo_code_id)
+                SELECT id, pizza_id, quantity, 'Unknown', order_date, NULL
+                FROM "Order"
+            ''')
+            
+            # Drop old table and rename new one
+            cursor.execute('DROP TABLE "Order"')
+            cursor.execute('ALTER TABLE "Order_new" RENAME TO "Order"')
+            
+            conn.commit()
+            print("Order table migration complete")
+        else:
+            print("Order table already migrated")
+            
+    except Exception as e:
+        print(f"Error migrating Order table: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
 if __name__ == '__main__':
     init_db()
+    migrate_order_table()
     app.run(debug=True, host='0.0.0.0', port=5001)
