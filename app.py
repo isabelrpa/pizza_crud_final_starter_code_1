@@ -49,8 +49,8 @@ def init_db():
         cursor.execute('SELECT COUNT(*) FROM Pizza')
         if cursor.fetchone()[0] == 0:
             sample_pizzas = [
+                ('Pepperoni', 13.99),      # Move Pepperoni first with correct price
                 ('Margherita', 14.99),
-                ('Pepperoni', 1.99),
                 ('Hawaiian', 99.99),
                 ('Vegetarian', 12.99),
                 ('Supreme', 14.99),
@@ -154,4 +154,4 @@ def confirmation():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
