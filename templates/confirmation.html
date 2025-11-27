@@ -11,7 +11,7 @@
     <img src="{{ url_for('static', filename='images/CRUD_Pizza_logo.png') }}" alt="CRUD Pizza Logo" class="logo">
   </div>
   <div class="container">
-    <h1>Thank you!</h1>
+    <h1>Thank you, {{ order.customer_name }}!</h1>
     <p>Your order has been placed and is being prepared.</p>
 
     <div class="order-details">
@@ -40,7 +40,13 @@
       </table>
 
       <div class="order-total">
+        <p><strong>Subtotal:</strong> ${{ '%.2f' % order.total }}</p>
+        {% if order.discount_percent %}
+        <p><strong>Discount:</strong> -${{ '%.2f' % order.discount_amount }}</p>
+        <p><strong>Total:</strong> ${{ '%.2f' % order.discounted_total }}</p>
+        {% else %}
         <p><strong>Total:</strong> ${{ '%.2f' % order.total }}</p>
+        {% endif %}
       </div>
     </div>
     

@@ -101,7 +101,7 @@ def get_order_details(order_id):
     try:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT o.id, p.name, p.price, o.quantity, pc.code, pc.discount_percent
+            SELECT o.id, p.name, p.price, o.quantity, pc.code, pc.discount_percent, o.customer_name
             FROM "Order" o
             JOIN Pizza p ON o.pizza_id = p.id
             LEFT JOIN PromoCode pc ON o.promo_code_id = pc.id
@@ -124,7 +124,9 @@ def create_order():
     pizza_id = request.form.get('pizza_id')
     quantity = request.form.get('quantity')
     customer_name = request.form.get('customer_name')
-    promo_code = request.form.get('promo_code')  # Get promo code from form
+    promo_code = request.form.get('promo_code')
+    
+    print(f"DEBUG - customer_name received: '{customer_name}'")
     
     if not pizza_id or not quantity or not customer_name:
         return redirect(url_for('menu'))
@@ -155,6 +157,11 @@ def confirmation():
     order = get_order_details(order_id)
     if not order:
         return redirect(url_for('menu'))
+    
+    subtotal = order[2] * order[3]
+    discount_percent = order[5] if order[5] else 0
+    discount_amount = subtotal * (discount_percent / 100)
+    discounted_total = subtotal - discount_amount
         
     order_data = {
         'order_id': order[0],
@@ -162,6 +169,10 @@ def confirmation():
         'price': order[2],
         'quantity': order[3],
         'promo_code': order[4] if order[4] else 'None',
+        'discount_percent': order[5] if order[5] else None,
+        'total': subtotal,
+        'discount_amount': discount_amount,
+        'discounted_total': discounted_total
     }
     
     return render_template('confirmation.html', 
