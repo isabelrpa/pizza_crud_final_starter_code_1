@@ -101,7 +101,7 @@ def get_order_details(order_id):
     try:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT o.id, p.name, p.price, o.quantity, pc.code, pc.discount_present, o.customer_name
+            SELECT o.id, p.name, p.price, o.quantity, pc.code, pc.discount_percent, o.customer_name
             FROM "Order" o
             JOIN Pizza p ON o.pizza_id = p.id
             LEFT JOIN PromoCode pc ON o.promo_code_id = pc.id
